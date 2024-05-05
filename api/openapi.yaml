@@ -1,0 +1,512 @@
+openapi: 3.0.3
+info:
+  title: Criativei API
+  description: | 
+    API responsible for managing the distribution of images in their folders
+  contact:
+    email: agoisrj@gmail.com
+  version: 1.0.0
+  x-swagger-codegen:
+    moduleName: criativei
+servers:
+  - url: http://localhost:8081/criativei/v1
+tags:
+  - name: users
+    description: |
+        Resource responsible for user operations
+paths:
+  /users:
+    post:
+      tags:
+        - users
+      summary: Users
+      description: Insert new users
+      operationId: new_users
+      requestBody:
+        description: User data
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/UserRequest'
+        required: true
+      responses:
+        "201":
+          description: User data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserModel'
+        "207":
+          description: |
+            **Multiple Status**
+  
+            Multiple status can indicate existing errors in the list, if the operation is successful, the status is not returned on the object, but the object's data.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  anyOf:
+                    - $ref: '#/components/schemas/UserModel'
+                    - $ref: '#/components/schemas/CustomStatus'
+        "400":
+          $ref: '#/components/responses/ClientError'
+        "417":
+          $ref: '#/components/responses/ListExpectationFailed'
+      x-openapi-router-controller: criativei_server.controllers.users_controller
+components:
+  responses:
+    SuccessfulStatusCustomMessage:
+      description: |
+        **Successful**
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              anyOf:
+                - $ref: '#/components/schemas/CustomStatus'
+          example:
+            - status: 200
+              message: "MESSAGE: The instance with identifier {id} was successfully updated."
+    SuccessStatusCustomMessage:
+      description: |
+        **Success**
+      content:
+        application/json:
+          schema:
+            anyOf:
+              - $ref: '#/components/schemas/CustomStatus'
+          example:
+            status: 200
+            message: "MESSAGE: The instance with identifier {id} was successfully updated."
+    AcceptedStatusCustomMessage:
+      description: |
+        **Accepted**
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CustomStatus'
+          example:
+            status: 202
+            message: "MESSAGE: The instance with identifier {id} was accepted and will be processed."
+    MultipleStatusCustomMessage:
+      description: |
+        **Multiple Status**
+        
+        Multiple status can indicate existing errors in the list, if the operation is successful, the status is not returned on the object, but the object's data.
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              anyOf:
+                - $ref: '#/components/schemas/CustomStatus'
+          example:
+            - 
+              status: 400
+              message: "Invalid json!"
+            - 
+              status: 200
+              message: "MESSAGE: The instance with identifier {id} was successfully updated."
+    ClientError:
+      description: |
+        **Client Error**
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CustomStatus'
+    ListExpectationFailed:
+      description: |
+        **Expectation Failed**
+        
+        Exception failed indicates an error in all operations.
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              anyOf:
+                - $ref: '#/components/schemas/CustomStatus'
+          example:
+            - 
+              status: 404
+              message: "WARNING: Instance with identifier {id} was not found!"
+            - 
+              status: 400
+              message: "Invalid json!"
+    ExpectationFailed:
+      description: |
+        **Expectation Failed**
+        
+        Exception failed indicates an error in all operations.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CustomStatus'
+          example:
+            status: 417
+            message: "ERROR: Expectation not met!"
+  schemas:
+    PageMetadata:
+      type: object
+      properties:
+        size:
+          type: integer
+          format: int64
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+          format: int64
+        number:
+          type: integer
+          format: int64
+        hasNext:
+          type: boolean
+        hasPrev:
+          type: boolean
+        firstPage:
+          type: integer
+          format: int64
+        lastPage:
+          type: integer
+          format: int64
+      example:
+        number: 1
+        size: 5
+        hasNext: true
+        hasPrev: false
+        firstPage: 1
+        lastPage: 3
+        totalPages: 3
+        totalElements: 12
+    CustomStatus:
+      type: object
+      properties:
+        status:
+          type: integer
+          format: int16
+          default: 400
+        message:
+          type: string
+          default: "Invalid json!"
+    AuditInfo:
+      type: object
+      properties:
+        created_by:
+          type: string
+        updated_by:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    UserModel:
+      allOf:
+        - type: object
+          properties:
+            id:
+              type: string
+        - $ref: '#/components/schemas/User'
+    User:
+      type: object
+      properties:
+        name:
+          type: string
+          example: 'João'
+        cpf:
+          type: string
+          example: '01234567890'
+        email:
+          type: string
+          format: email
+          example: 'teste@teste.com'
+        password:
+          type: string
+          example: '12345'
+        gender:
+          type: string
+          enum: [male, female, other]
+        premium:
+          type: boolean
+        terms:
+          type: boolean  
+    UserRequest:
+      allOf:
+        - $ref: '#/components/schemas/User'      
+  parameters:
+    pageQuery:
+      name: page
+      in: query
+      required: false
+      schema:
+        minimum: 1
+        type: integer
+        format: int32
+        example: 1
+    sizeQuery:
+      name: size
+      in: query
+      required: false
+      schema:
+        minimum: 1
+        type: integer
+        format: int32
+        example: 10
+    sortQuery:
+      name: sort
+      in: query
+      required: false
+      schema:
+        type: array
+        items:
+          type: string
+    idPath:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+    imageIdPath:
+      name: image_id
+      in: path
+      required: true
+      schema:
+        type: string
+    backgroundIdPath:
+      name: background_id
+      in: path
+      required: true
+      schema:
+        type: string
+    folderIdPath:
+      name: folder_id
+      in: path
+      required: true
+      schema:
+        type: string
+    userIdPath:
+      name: user_id
+      in: path
+      required: true
+      schema:
+        type: string    
+    subfolderIdPath:
+      name: subfolder_id
+      in: path
+      required: true
+      schema:
+        type: string
+    imageTypeQuery:
+      name: image_type
+      in: query
+      schema:
+        type: string
+        enum:
+        - BACKGROUND
+        - STICKER
+    typeRequiredQuery:
+      name: image_type
+      in: query
+      required: true
+      schema:
+        type: string
+        enum:
+        - BACKGROUND
+        - STICKER
+    mediaQuery:
+      name: media
+      in: query
+      schema:
+        type: string
+        enum:
+        - GIF
+        - STATIC
+    idQuery:
+      name: _id
+      in: query
+      required: false
+      schema:
+        type: string
+    nameImageQuery:
+      name: name
+      in: query
+      required: false
+      schema:
+        type: string
+    nameFolderQuery:
+      name: name
+      in: query
+      description: Filter by folder or subfolder name
+      required: false
+      schema:
+        type: string
+    nameUserQuery:
+      name: name
+      in: query
+      required: false
+      schema:
+        type: string    
+    nameSubfolderQuery:
+      name: subfolder
+      in: query
+      required: false
+      schema:
+        type: string
+    nameBackgroundQuery:
+      name: name
+      in: query
+      required: false
+      schema:
+        type: string    
+    tagQuery:
+      name: tag
+      in: query
+      required: false
+      schema:
+        type: string
+    qtdItemQuery:
+      name: qtdItem
+      in: query
+      required: false
+      schema:
+        type: integer
+    imageIdRequiredQuery:
+      name: image_id
+      in: query
+      required: True
+      schema:
+          type: string
+    favoriteIdRequiredQuery:
+      name: favorite_id
+      in: query
+      required: True
+      schema:
+          type: string
+    favoriteFoldersIdRequiredQuery:
+      name: favorite_folders_id
+      in: query
+      required: True
+      schema:
+          type: string
+    favoriteBackgroundIdRequiredQuery:
+      name: favorite_backgrounds_id
+      in: query
+      required: True
+      schema:
+          type: string
+    folderIdsRequiredQuery:
+      name: folder_id
+      in: query
+      schema:
+          type: string
+    userIdsRequiredQuery:
+      name: user_id
+      in: query
+      required: True
+      schema:
+          type: string      
+    subfolderIdsRequiredQuery:
+      name: subfolder_ids
+      in: query
+      required: True
+      schema:
+        type: array
+        items:
+          type: string      
+    backgroundIdRequiredQuery:
+      name: background_id
+      in: query
+      required: True
+      schema:
+          type: string            
+    idsRequiredQuery:
+      name: ids
+      in: query
+      required: true
+      schema:
+        type: array
+        items:
+          type: string
+    searchAtQuery:
+      name: search
+      in: query
+      required: false
+      schema:
+        type: string
+    newsQuery:
+      name: news
+      in: query
+      required: false
+      schema:
+        type: boolean
+    nameQuery:
+      name: name
+      in: query
+      required: false
+      schema:
+        type: string
+    createdStartAtQuery:
+      name: created_start_at
+      in: query
+      description: Start date that need to be considered for filter
+      required: false
+      style: form
+      explode: true
+      schema:
+        type: string
+        format: date-time
+    createdFinishAtQuery:
+      name: created_finish_at
+      in: query
+      description: Finish date that need to be considered for filter
+      required: false
+      style: form
+      explode: true
+      schema:
+        type: string
+        format: date-time
+    updatedStartAtQuery:
+      name: updated_start_at
+      in: query
+      description: Start date that need to be considered for filter
+      required: false
+      style: form
+      explode: true
+      schema:
+        type: string
+        format: date-time
+    updatedFinishAtQuery:
+      name: updated_finish_at
+      in: query
+      description: Finish date that need to be considered for filter
+      required: false
+      style: form
+      explode: true
+      schema:
+        type: string
+        format: date-time
+    createdByQuery:
+      name: created_by
+      in: query
+      required: false
+      style: form
+      explode: true
+      schema:
+        type: string
+    updatedByQuery:
+      name: updated_by
+      in: query
+      required: false
+      style: form
+      explode: true
+      schema:
+        type: string
